@@ -16,13 +16,27 @@ DOCKER2ACI=${DOCKER2ACI-docker2aci}
 CASYNC=${CASYNC-casync}
 
 IMAGES=(
-	library/ubuntu:zesty-20170913
-	library/ubuntu:zesty-20170703
-	library/ubuntu:zesty-20170619
-	library/ubuntu:zesty-20170411
-	library/ubuntu:zesty-20170224
-	library/ubuntu:zesty-20170118
+	library/registry:0.6.1
+	library/registry:0.6.2
+	library/registry:0.6.3
+	library/registry:0.6.4
+	library/registry:0.6.5
+	library/registry:0.6.6
+	library/registry:0.6.7
+	library/registry:0.6.8
+	library/registry:0.6.9
+	library/registry:0.7.0
+	library/registry:0.7.1
+)
+
+IMAGES=(
 	library/ubuntu:zesty-20161212
+	library/ubuntu:zesty-20170118
+	library/ubuntu:zesty-20170224
+	library/ubuntu:zesty-20170411
+	library/ubuntu:zesty-20170619
+	library/ubuntu:zesty-20170703
+	library/ubuntu:zesty-20170913
 )
 
 IMAGES=(
@@ -52,25 +66,15 @@ IMAGES=(
 	prom/prometheus:v2.0.0-beta.5
 )
 
-IMAGES=(
-	library/registry:0.6.1
-	library/registry:0.6.2
-	library/registry:0.6.3
-	library/registry:0.6.4
-	library/registry:0.6.5
-	library/registry:0.6.6
-	library/registry:0.6.7
-	library/registry:0.6.8
-	library/registry:0.6.9
-	library/registry:0.7.0
-	library/registry:0.7.1
-)
 
-TAGS=$(wget -q https://registry.hub.docker.com/v1/repositories/registry/tags -O -  | sed -e 's/[][]//g' -e 's/"//g' -e 's/ //g' | tr '}' '\n'  | awk -F: '{print $3}')
-IMAGES=()
-for i in $TAGS ; do
-	IMAGES+=( library/registry:$i )
-done
+#TAGS=$(wget -q https://registry.hub.docker.com/v1/repositories/registry/tags -O -  | sed -e 's/[][]//g' -e 's/"//g' -e 's/ //g' | tr '}' '\n'  | awk -F: '{print $3}')
+#IMAGES=()
+#for i in $TAGS ; do
+#	if "$i" == latest ; then
+#		continue
+#	fi
+#	IMAGES+=( library/registry:$i )
+#done
 
 function acifile_from_name() {
 	image=$1
@@ -78,6 +82,12 @@ function acifile_from_name() {
 	acifile=${acifile//:/-}.aci
 	echo $acifile
 }
+
+echo "List of images:"
+for image in "${IMAGES[@]}" ; do
+	echo $image
+done
+echo
 
 for image in "${IMAGES[@]}" ; do
 	acifile=`acifile_from_name $image`
@@ -113,7 +123,8 @@ for image in "${IMAGES[@]}" ; do
 done
 
 echo
-echo "version;aci size;store;accumulated store;downloaded with casync"
+#echo "version;aci size;store;accumulated store;downloaded with casync"
+echo "version;full download;download with casync"
 acc=0
 for image in "${IMAGES[@]}" ; do
 	acifile=`acifile_from_name $image`
@@ -122,7 +133,8 @@ for image in "${IMAGES[@]}" ; do
 	storesize=`gawk '{print $1}' ${acifile}.du`
 	casyncsize=`gawk '{print $1}' ${acifile}.cumulated.du`
 	
-	echo "'$version;$acisize;$storesize;$casyncsize;$(($casyncsize - $acc))"
+	#echo "'$version;$acisize;$storesize;$casyncsize;$(($casyncsize - $acc))"
+	echo "'$version;$acisize;$(($casyncsize - $acc))"
 
 	acc=$casyncsize
 done
